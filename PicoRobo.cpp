@@ -1,75 +1,127 @@
-#include <Servo.h> 
+#include <Servo.h>
 #include <Arduino.h>
-
+#include "PicoRobo.h"
 //====================================================================================================================
 //Parameter
 //====================================================================================================================
-#include "PicoRobo.h"
-int moveSpeed;
-int headCurrent;
-int headTarget;
+#define SERV_NUM 4                  //number of servo for array
+#define FRAME 20                    //interval time from current step to next step: 20msecc
 
-Servo servo;
+int current_angle[SERV_NUM];
+int target_angle[SERV_NUM+1];
+float rotating_angle[SERV_NUM];      //rotating angle on each frame: calcurated by (target_angle - current_angle)/number of steps
+int servo_trim[SERV_NUM];            //trim to adjust each servo motors's angle to center
 
+Servo servo[SERV_NUM];
+#define CENTER 4
+#define RIGHT 5
+#define LEFT 6
+#define NECK 7
+#define DELAY 50
+
+//====================================================================================================================
+//Servo Method
+//====================================================================================================================
 void PicoRobo::initServo(){
     
   //attach pins to each servo
-  servo.attach(HEAD);
- 
+  servo[0].attach(CENTER);
+  servo[1].attach(RIGHT);
+  servo[2].attach(LEFT);
+  servo[3].attach(NECK);
+  
+  //set trim
+  int tmp_trim[SERV_NUM]={0,0,0,0};      //set trim to each servo
+  for(int i=0;i<SERV_NUM;i++){
+    servo_trim[i]=tmp_trim[i];
+  }
+  
   //rotate all servos to center position
   setCenterToServo();
 }
 
 void PicoRobo::setCenterToServo(){
-  servo.write(90);
-  moveSpeed = 300;
-  headCurrent = 0;
-  headTarget = 0;
+  for(int i=0;i<SERV_NUM;i++){
+    servo[i].write(90 + servo_trim[i]);
+    current_angle[i] = 0;
+    target_angle[i] = 0;
+  }
 }
 
 //move to next position
-void PicoRobo::moveToNextTarget(){
-  servo.write(headTarget + 90);
-  delay(1000);
-}
-
-
-void PicoRobo::playString(char * motion){
-  char h,t,u = '0';
-  char sign = '+';
-  int i = 0;
-  while(motion[i] != 0) {
-    char c = motion[i];
-    switch(c){
-      case 's':
-       h = motion[++i];
-       t = motion[++i];
-       u = motion[++i];
-       moveSpeed = charToString(h,t,u);
-       break;
-      case 'h':
-       sign = motion[++i];
-       t = motion[++i];
-       u = motion[++i];
-       headTarget = charToString('0',t,u);
-       if (sign == '-'){
-        headTarget = -headTarget;
-       }
-       break;
-      case '|':
-       moveToNextTarget();
-       break;
-    }
-    i++;
+void PicoRobo::moveToNextPosition(){
+  
+  //check limit
+   for(int i=0;i<SERV_NUM;i++){
+     if(target_angle[i]>90){
+       target_angle[i]=90;
+     }else if(target_angle[i]<-90){
+       target_angle[i]=-90;
+     }
+   }
+  
+  int numberOfStep = target_angle[SERV_NUM]/FRAME;    //total number of steps to move to next position
+  
+  for(int i=0;i<SERV_NUM;i++){
+    rotating_angle[i]=((float)target_angle[i]-(float)current_angle[i])/(float)numberOfStep;
   }
-  moveToNextTarget();
+  
+  int next_timing = millis() + FRAME;
+  int current_time;
+  float tmp_angle[SERV_NUM];
+  
+  for(int i=0;i<SERV_NUM;i++){
+    tmp_angle[i]=(float)current_angle[i];
+  }
+  
+  while(numberOfStep){
+    current_time=millis();
+    if(current_time>next_timing){
+      for(int i=0;i<SERV_NUM;i++){
+        tmp_angle[i] += rotating_angle[i];
+            
+        if(rotating_angle[i]<0){
+          if(current_angle[i]>target_angle[i]){
+            current_angle[i] = (int)tmp_angle[i];
+          }
+        }else if(rotating_angle[i]>0){
+          if(current_angle[i]<target_angle[i]){
+            current_angle[i] = (int)tmp_angle[i];
+          }else{
+            current_angle[i]=target_angle[i];
+          }
+        }
+        servo[i].write(current_angle[i]+servo_trim[i]+90);        
+      }
+      next_timing = next_timing + FRAME;
+      numberOfStep--;
+    }
+  }
+  
+  //adjust current_angle
+  for(int i=0;i<SERV_NUM;i++){
+    if(rotating_angle[i]<0 && current_angle[i]>target_angle[i]){
+      current_angle[i] = target_angle[i];
+      servo[i].write(current_angle[i]+servo_trim[i]+90);
+    }else if(rotating_angle[i]>0 && current_angle[i]<target_angle[i]){
+      current_angle[i] = target_angle[i];
+      servo[i].write(current_angle[i]+servo_trim[i]+90);
+    }else if(rotating_angle[i]<0 && current_angle[i]<target_angle[i]){
+      current_angle[i] = target_angle[i];
+      servo[i].write(current_angle[i]+servo_trim[i]+90);
+    }else if(rotating_angle[i]>0 && current_angle[i]>target_angle[i]){
+      current_angle[i] = target_angle[i];
+      servo[i].write(current_angle[i]+servo_trim[i]+90);
+    }
+  }
 }
 
-int PicoRobo::charToString(char h, char t, char u){
-   int temp = u - '0';
-   temp +=   (t - '0') * 10;
-   temp +=   (h - '0') * 100;
-
-   return temp;
+//call moveToNextPosition() method continuously
+void PicoRobo::playMotion(int motion[][SERV_NUM+1], int numberOfMotion){
+  for(int i=0;i<numberOfMotion;i++){
+    for(int j=0;j<SERV_NUM+1;j++){
+      target_angle[j]=motion[i][j];
+    }
+    moveToNextPosition();
+  }
 }
-
