@@ -35,6 +35,7 @@ void PicoRobo::initServo(){
   for(int i=0;i<SERV_NUM;i++){
     servo_trim[i]=tmp_trim[i];
   }
+
   
   //rotate all servos to center position
   setCenterToServo();
@@ -79,25 +80,13 @@ void PicoRobo::moveToNextPosition(){
     if(current_time>next_timing){
       for(int i=0;i<SERV_NUM;i++){
         tmp_angle[i] += rotating_angle[i];
-            
-        if(rotating_angle[i]<0){
-          if(current_angle[i]>target_angle[i]){
-            current_angle[i] = (int)tmp_angle[i];
-          }
-        }else if(rotating_angle[i]>0){
-          if(current_angle[i]<target_angle[i]){
-            current_angle[i] = (int)tmp_angle[i];
-          }else{
-            current_angle[i]=target_angle[i];
-          }
-        }
+        current_angle[i] = (int)tmp_angle[i];
         servo[i].write(current_angle[i]+servo_trim[i]+90);        
       }
       next_timing = next_timing + FRAME;
       numberOfStep--;
     }
   }
-  
   //adjust current_angle
   for(int i=0;i<SERV_NUM;i++){
     current_angle[i] = target_angle[i];
