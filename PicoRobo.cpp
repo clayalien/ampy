@@ -106,3 +106,4 @@ void PicoRobo::playMotion(int motion[][SERV_NUM+1], int numberOfMotion){
     moveToNextPosition();
   }
 }
+

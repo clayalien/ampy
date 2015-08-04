@@ -12,19 +12,19 @@
 
 class PicoRobo {
 public:
+    int target_angle[SERV_NUM+1];
+
     void initServo();
     void playMotion(int motion[][SERV_NUM+1], int numberOfMotion);
+    void setCenterToServo();
+    void moveToNextPosition();
     
 protected:
     
 private:
     int current_angle[SERV_NUM];
-    int target_angle[SERV_NUM+1];
     float rotating_angle[SERV_NUM];      //rotating angle on each frame: calcurated by (target_angle - current_angle)/number of steps
     int servo_trim[SERV_NUM];            //trim to adjust each servo motors's angle to center
     
     Servo servo[SERV_NUM];
-
-    void setCenterToServo();
-    void moveToNextPosition();
 };

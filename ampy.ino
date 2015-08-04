@@ -45,6 +45,25 @@ void loop() {
       case 'o':
         body.playMotion(dance_o, 5);
         break;
+
+      case 'T':
+        body.target_angle[0]=Serial.parseInt();
+        break;
+      case 'R':
+        body.target_angle[1]=Serial.parseInt();
+        break;
+      case 'L':
+        body.target_angle[2]=Serial.parseInt();
+        break;
+      case 'H':
+        body.target_angle[3]=Serial.parseInt();
+        break;
+      case 'S':
+        body.target_angle[4]=Serial.parseInt();
+        break;
+
+      case ';':
+        body.moveToNextPosition();
       case '\n':
       case '\r':
         break;
