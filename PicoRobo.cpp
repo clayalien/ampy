@@ -11,6 +11,7 @@ int current_angle[SERV_NUM];
 int target_angle[SERV_NUM+1];
 float rotating_angle[SERV_NUM];      //rotating angle on each frame: calcurated by (target_angle - current_angle)/number of steps
 int servo_trim[SERV_NUM];            //trim to adjust each servo motors's angle to center
+int servo_limit[SERV_NUM];           //limit to prevent each motor going to bad places
 
 Servo servo[SERV_NUM];
 #define CENTER 4
@@ -31,11 +32,13 @@ void PicoRobo::initServo(){
   servo[3].attach(NECK);
   
   //set trim
-  int tmp_trim[SERV_NUM]={0,0,0,0};      //set trim to each servo
+  int tmp_trim[SERV_NUM]={0,-4,3,0};      //set trim to each servo
+  int tmp_limit[SERV_NUM]={40,15,15,75};      //set trim to each servo
+  
   for(int i=0;i<SERV_NUM;i++){
     servo_trim[i]=tmp_trim[i];
+    servo_limit[i]=tmp_limit[i];
   }
-
   
   //rotate all servos to center position
   setCenterToServo();
@@ -54,10 +57,10 @@ void PicoRobo::moveToNextPosition(){
   
   //check limit
    for(int i=0;i<SERV_NUM;i++){
-     if(target_angle[i]>90){
-       target_angle[i]=90;
-     }else if(target_angle[i]<-90){
-       target_angle[i]=-90;
+     if(target_angle[i]>servo_limit[i]){
+       target_angle[i]=servo_limit[i];
+     }else if(target_angle[i]<-servo_limit[i]){
+       target_angle[i]=-servo_limit[i];
      }
    }
   
