@@ -45,7 +45,10 @@ void loop() {
       case 'o':
         body.playMotion(dance_o, 5);
         break;
-      case 'h':
+      case '\n':
+      case '\r':
+        break;
+      default:
         Serial.write("wsad - move\n");
         Serial.write("j - scan\n");
         Serial.write("k - home\n");
