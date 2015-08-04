@@ -100,19 +100,8 @@ void PicoRobo::moveToNextPosition(){
   
   //adjust current_angle
   for(int i=0;i<SERV_NUM;i++){
-    if(rotating_angle[i]<0 && current_angle[i]>target_angle[i]){
-      current_angle[i] = target_angle[i];
-      servo[i].write(current_angle[i]+servo_trim[i]+90);
-    }else if(rotating_angle[i]>0 && current_angle[i]<target_angle[i]){
-      current_angle[i] = target_angle[i];
-      servo[i].write(current_angle[i]+servo_trim[i]+90);
-    }else if(rotating_angle[i]<0 && current_angle[i]<target_angle[i]){
-      current_angle[i] = target_angle[i];
-      servo[i].write(current_angle[i]+servo_trim[i]+90);
-    }else if(rotating_angle[i]>0 && current_angle[i]>target_angle[i]){
-      current_angle[i] = target_angle[i];
-      servo[i].write(current_angle[i]+servo_trim[i]+90);
-    }
+    current_angle[i] = target_angle[i];
+    servo[i].write(current_angle[i]+servo_trim[i]+90);
   }
 }
 
